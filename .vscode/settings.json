@@ -1,0 +1,31 @@
+{
+  "C_Cpp.intelliSenseEngine": "disabled",
+  "cmake.statusbar.advanced": {
+    "debug": {
+      "visibility": "hidden"
+    },
+    "buildTarget": {
+      "visibility": "hidden"
+    },
+    "launchTarget": {
+      "visibility": "hidden"
+    },
+    "kit": {
+      "visibility": "hidden"
+    }
+  },
+  "clangd.arguments": ["--compile-commands-dir=build"],
+  "editor.formatOnSave": true,
+  "platformSettings.autoLoad": true,
+  "search.exclude": {
+    "**/build": true
+  },
+  "platformSettings.platforms": {
+    "win32": {
+      "nodes": {
+        "cmake.cmakePath": "C:\\msys64\\clang64\\bin\\cmake",
+        "clangd.path": "C:\\msys64\\clang64\\bin\\clangd.exe"
+      }
+    }
+  }
+}

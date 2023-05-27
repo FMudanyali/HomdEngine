@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "llvm-vs-code-extensions.vscode-clangd",
+    "ms-vscode.cpptools-extension-pack",
+    "vadimcn.vscode-lldb",
+    "fabiospampinato.vscode-statusbar-debugger",
+    "runarsf.platform-settings"
+  ]
+}
