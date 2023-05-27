@@ -6,11 +6,16 @@
 #ifndef _HOMD_SCENE
 #define _HOMD_SCENE
 
+class Game;
+
 class Scene {
    public:
+    Game* game;
+
     bool destroy = false;
     Scene() = default;
-    ~Scene() = default;
+    virtual ~Scene() = default;
+    virtual void draw() = 0;
 };
 
 #endif

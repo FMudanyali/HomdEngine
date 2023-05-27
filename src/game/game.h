@@ -11,6 +11,7 @@
 #include <stack>
 
 class Scene;
+class Graphics;
 
 class Game {
     bool done = false;
@@ -19,6 +20,7 @@ class Game {
    public:
     Window* pWindow;
     Input* pInput;
+    Graphics* pRenderer;
 
     Game();
     ~Game() = default;
