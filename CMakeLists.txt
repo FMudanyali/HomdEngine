@@ -123,7 +123,7 @@ TARGET_LINK_LIBRARIES(HomdEngine
 # under macOS, we need to replace its signature to allow profiling.
 IF(APPLE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
     ADD_CUSTOM_COMMAND(
-        TARGET GlandMiner POST_BUILD
+        TARGET HomdEngine POST_BUILD
         COMMAND /usr/bin/codesign -s -
         --entitlements ${CMAKE_SOURCE_DIR}/debug.entitlements
         -f ${CMAKE_CURRENT_BINARY_DIR}/HomdEngine
