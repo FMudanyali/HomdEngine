@@ -18,12 +18,19 @@ class Window;
 class Graphics {
     Game* pGame;
     SDL_GLContext context = nullptr;
+    GLuint program;
 
    public:
     Graphics(Game*);
     ~Graphics() = default;
 
     void setGLContext();
+    void compileShader(const char* shaderSrc, int shaderType) const;
+    void bindAttribLoc(int, const char*) const;
+    void useProgram() const;
+    GLint getUniformLoc(const char* name) const;
+    static void setUniformValue(GLint, const GLfloat[4]);
+    static void setUniformMatrixValue(GLint, const GLfloat[16]);
 
     void draw();
 

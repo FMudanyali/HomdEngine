@@ -13,6 +13,7 @@
 #include <iostream>
 #include <string>
 
+#ifdef DEBUG
 void GLAPIENTRY MessageCallback(GLenum source,
                                 GLenum type,
                                 GLuint id,
@@ -25,6 +26,7 @@ void GLAPIENTRY MessageCallback(GLenum source,
             (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""), type,
             severity, message);
 }
+#endif
 
 Graphics::Graphics(Game* game) {
     this->pGame = game;
@@ -40,8 +42,50 @@ Graphics::Graphics(Game* game) {
     glewExperimental = GL_TRUE;
     glewInit();
 
+#ifdef DEBUG
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(MessageCallback, nullptr);
+#endif
+
+    this->program = glCreateProgram();
+}
+
+void Graphics::compileShader(const char* shaderSrc, int shaderType) const {
+    GLuint shader = glCreateShader(shaderType);
+    glShaderSource(shader, 1, &shaderSrc, nullptr);
+    glCompileShader(shader);
+    glAttachShader(this->program, shader);
+#ifdef DEBUG
+    char msg[512];
+    glGetShaderInfoLog(shader, sizeof msg, nullptr, msg);
+    std::cout << "Vertex shader info: " << msg << "\n";
+#endif
+}
+
+void Graphics::bindAttribLoc(int argIndex, const char* argName) const {
+    glBindAttribLocation(this->program, argIndex, argName);
+}
+
+void Graphics::useProgram() const {
+    glLinkProgram(program);
+#ifdef DEBUG
+    char msg[512];
+    glGetProgramInfoLog(program, sizeof msg, nullptr, msg);
+    std::cout << "Program info: " << msg << "\n";
+#endif
+    glUseProgram(program);
+}
+
+GLint Graphics::getUniformLoc(const char* name) const {
+    return glGetUniformLocation(this->program, name);
+}
+
+void Graphics::setUniformValue(GLint position, const GLfloat value[4]) {
+    glUniform4fv(position, 1, value);
+}
+
+void Graphics::setUniformMatrixValue(GLint position, const GLfloat value[16]) {
+    glUniformMatrix4fv(position, 1, GL_FALSE, value);
 }
 
 void Graphics::storeVertexBufObj(GLuint& dest, GLsizeiptr size, int* target) {

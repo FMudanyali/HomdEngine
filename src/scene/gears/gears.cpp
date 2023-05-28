@@ -56,49 +56,27 @@ static const char* fragmentShader = R"(
 
 GearsScene::GearsScene(Game* pGame) {
     this->pGame = pGame;
-    char msg[512];
-    const char* p;
 
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
 
-    GLuint vertex;
-    GLuint fragment;
-    GLuint program;
+    this->pGame->pRenderer->compileShader(vertexShader, GL_VERTEX_SHADER);
+    this->pGame->pRenderer->compileShader(fragmentShader, GL_FRAGMENT_SHADER);
+    this->pGame->pRenderer->bindAttribLoc(0, "position");
+    this->pGame->pRenderer->bindAttribLoc(1, "normal");
 
-    p = vertexShader;
-    vertex = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex, 1, &p, nullptr);
-    glCompileShader(vertex);
-    glGetShaderInfoLog(vertex, sizeof msg, nullptr, msg);
-    std::cout << "Vertex shader info: " << msg << "\n";
-
-    p = fragmentShader;
-    fragment = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment, 1, &p, nullptr);
-    glCompileShader(fragment);
-    glGetShaderInfoLog(fragment, sizeof msg, nullptr, msg);
-    std::cout << "Fragment shader info: " << msg << "\n";
-
-    program = glCreateProgram();
-    glAttachShader(program, vertex);
-    glAttachShader(program, fragment);
-    glBindAttribLocation(program, 0, "position");
-    glBindAttribLocation(program, 1, "normal");
-
-    glLinkProgram(program);
-    glGetProgramInfoLog(program, sizeof msg, nullptr, msg);
-    std::cout << "Program info: " << msg << "\n";
-
-    glUseProgram(program);
+    this->pGame->pRenderer->useProgram();
 
     this->modelViewProjectionMatrixLoc =
-        glGetUniformLocation(program, "ModelViewProjectionMatrix");
-    this->normalMatrixLoc = glGetUniformLocation(program, "NormalMatrix");
-    this->lightSrcPosLoc = glGetUniformLocation(program, "LightSourcePosition");
-    this->materialColorLoc = glGetUniformLocation(program, "MaterialColor");
+        this->pGame->pRenderer->getUniformLoc("ModelViewProjectionMatrix");
+    this->normalMatrixLoc =
+        this->pGame->pRenderer->getUniformLoc("NormalMatrix");
+    this->lightSrcPosLoc =
+        this->pGame->pRenderer->getUniformLoc("LightSourcePosition");
+    this->materialColorLoc =
+        this->pGame->pRenderer->getUniformLoc("MaterialColor");
 
-    glUniform4fv((GLint)this->lightSrcPosLoc, 1, lightSourcePos);
+    Graphics::setUniformValue((GLint)this->lightSrcPosLoc, lightSourcePos);
 
     gears[0] = createGear(1.0, 4.0, 1.0, 20, 0.7);
     gears[1] = createGear(0.5, 2.0, 2.0, 10, 0.7);
@@ -266,11 +244,9 @@ Gear* GearsScene::createGear(GLfloat innerRad,
     }
 
     gear->nVertices = (int)(vertex - gear->vertices);
-    glGenBuffers(1, &gear->vertexBufObj);
-    glBindBuffer(GL_ARRAY_BUFFER, gear->vertexBufObj);
-    glBufferData(GL_ARRAY_BUFFER,
-                 (GLsizeiptr)(gear->nVertices * sizeof(GearVertex)),
-                 gear->vertices, GL_STATIC_DRAW);
+    Graphics::storeVertexBufObj(
+        gear->vertexBufObj, (GLsizeiptr)(gear->nVertices * sizeof(GearVertex)),
+        (int*)gear->vertices);
 
     return gear;
 }
@@ -295,9 +271,8 @@ void GearsScene::drawGear(Gear* gear,
     memcpy(modelViewProjection, this->projectionMatrix,
            sizeof(modelViewProjection));
     Graphics::multiply4x4Matrices(modelViewProjection, modelView);
-
-    glUniformMatrix4fv((GLint)this->modelViewProjectionMatrixLoc, 1, GL_FALSE,
-                       modelViewProjection);
+    Graphics::setUniformMatrixValue((GLint)this->modelViewProjectionMatrixLoc,
+                                    modelViewProjection);
 
     /*
      * Create and set the NormalMatrix. It's the inverse transpose of the
@@ -306,10 +281,10 @@ void GearsScene::drawGear(Gear* gear,
     memcpy(normalMatrix, modelView, sizeof(normalMatrix));
     Graphics::invert4x4Matrix(normalMatrix);
     Graphics::transpose4x4Matrix(normalMatrix);
-    glUniformMatrix4fv((GLint)this->normalMatrixLoc, 1, GL_FALSE, normalMatrix);
+    Graphics::setUniformMatrixValue((GLint)this->normalMatrixLoc, normalMatrix);
 
     /* Set the gear color */
-    glUniform4fv((GLint)this->materialColorLoc, 1, color);
+    Graphics::setUniformValue((GLint)this->materialColorLoc, color);
 
     /* Set the vertex buffer object to use */
     glBindBuffer(GL_ARRAY_BUFFER, gear->vertexBufObj);
