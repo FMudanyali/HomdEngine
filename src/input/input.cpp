@@ -3,8 +3,8 @@
  * All rights reserved
  */
 
-#include <input/input.h>
 #include <game/game.h>
+#include <input/input.h>
 
 Input::Input(Game* pGame) {
     this->game = pGame;

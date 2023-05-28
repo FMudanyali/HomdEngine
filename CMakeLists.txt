@@ -67,11 +67,11 @@ SET(CMAKE_CXX_FLAGS
 SET(SOURCE_FILES
     src/game/game.cpp
 
-    src/graphics/opengl/opengl.cpp
+    src/graphics/graphics.cpp
 
     src/input/input.cpp
 
-    src/scene/example/example.cpp
+    src/scene/gears/gears.cpp
 
     src/window/window.cpp
 
@@ -114,8 +114,8 @@ ENDIF()
 
 TARGET_LINK_LIBRARIES(HomdEngine
     sdl2
-    glew32
     opengl32
+    glew32
     ${win32_link}
 )
 

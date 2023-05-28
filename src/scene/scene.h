@@ -10,7 +10,7 @@ class Game;
 
 class Scene {
    public:
-    Game* game;
+    Game* pGame;
 
     bool destroy = false;
     Scene() = default;

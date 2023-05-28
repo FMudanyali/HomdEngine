@@ -4,14 +4,14 @@
  */
 
 #include <game/game.h>
-#include <scene/example/example.h>
-#include <graphics/opengl/opengl.h>
+#include <graphics/graphics.h>
+#include <scene/gears/gears.h>
 
 Game::Game() {
     this->pWindow = new Window(this);
-    this->pRenderer = new OpenGL(this);
+    this->pRenderer = new Graphics(this);
     this->pInput = new Input(this);
-    this->scenes.push(new Example(this));
+    this->scenes.push(new GearsScene(this));
 }
 
 void Game::loop() {
