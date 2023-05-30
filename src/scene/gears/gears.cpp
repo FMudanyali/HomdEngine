@@ -57,64 +57,87 @@ static const char* fragmentShader = R"(
 GearsScene::GearsScene(Game* pGame) {
     this->pGame = pGame;
 
-    glEnable(GL_CULL_FACE);
-    glEnable(GL_DEPTH_TEST);
+    Graphics::enable(GL_CULL_FACE);
+    Graphics::enable(GL_DEPTH_TEST);
 
-    this->pGame->pRenderer->compileShader(vertexShader, GL_VERTEX_SHADER);
-    this->pGame->pRenderer->compileShader(fragmentShader, GL_FRAGMENT_SHADER);
-    this->pGame->pRenderer->bindAttribLoc(0, "position");
-    this->pGame->pRenderer->bindAttribLoc(1, "normal");
+    pGame->pRenderer->compileShader(vertexShader, GL_VERTEX_SHADER);
+    pGame->pRenderer->compileShader(fragmentShader, GL_FRAGMENT_SHADER);
+    pGame->pRenderer->bindAttribLoc(0, "position");
+    pGame->pRenderer->bindAttribLoc(1, "normal");
 
-    this->pGame->pRenderer->useProgram();
+    pGame->pRenderer->useProgram();
 
-    this->modelViewProjectionMatrixLoc =
-        this->pGame->pRenderer->getUniformLoc("ModelViewProjectionMatrix");
-    this->normalMatrixLoc =
-        this->pGame->pRenderer->getUniformLoc("NormalMatrix");
-    this->lightSrcPosLoc =
-        this->pGame->pRenderer->getUniformLoc("LightSourcePosition");
-    this->materialColorLoc =
-        this->pGame->pRenderer->getUniformLoc("MaterialColor");
+    modelViewProjectionMatrixLoc =
+        pGame->pRenderer->getUniformLoc("ModelViewProjectionMatrix");
+    normalMatrixLoc = pGame->pRenderer->getUniformLoc("NormalMatrix");
+    lightSrcPosLoc = pGame->pRenderer->getUniformLoc("LightSourcePosition");
+    materialColorLoc = pGame->pRenderer->getUniformLoc("MaterialColor");
 
-    Graphics::setUniformValue((GLint)this->lightSrcPosLoc, lightSourcePos);
+    Graphics::setUniformValue((GLint)lightSrcPosLoc, lightSourcePos);
 
     gears[0] = createGear(1.0, 4.0, 1.0, 20, 0.7);
     gears[1] = createGear(0.5, 2.0, 2.0, 10, 0.7);
     gears[2] = createGear(1.3, 2.0, 0.5, 10, 0.7);
 }
 
-GearVertex* GearsScene::fillGearVertex(GearVertex* gearVertex,
-                                       GLfloat x,
-                                       GLfloat y,
-                                       GLfloat z,
-                                       const GLfloat n[3]) {
-    gearVertex[0][0] = x;
-    gearVertex[0][1] = y;
-    gearVertex[0][2] = z;
-    gearVertex[0][3] = n[0];
-    gearVertex[0][4] = n[1];
-    gearVertex[0][5] = n[2];
+void GearsScene::fillGearVertex(GLfloat x,
+                                GLfloat y,
+                                GLfloat z,
+                                const GLfloat n[3]) {
+    vertex[0][0] = x;
+    vertex[0][1] = y;
+    vertex[0][2] = z;
+    vertex[0][3] = n[0];
+    vertex[0][4] = n[1];
+    vertex[0][5] = n[2];
+    vertex += 1;
+}
 
-    return gearVertex + 1;
+Point GearsScene::GearPoint(GLfloat radius, int diameter) {
+    return Point{(float)((radius)*cosArr[(diameter)]),
+                 (float)((radius)*sinArr[(diameter)])};
+}
+
+void GearsScene::setNormal(GLfloat x, GLfloat y, GLfloat z) {
+    normal[0] = x;
+    normal[1] = y;
+    normal[2] = z;
+}
+
+void GearsScene::gearVert(int point, int sign, GLfloat gearWidth) {
+    fillGearVertex(points[(point)].x, points[(point)].y,
+                   (GLfloat)(sign)*gearWidth * 0.5F, normal);
+}
+
+void GearsScene::startStrip(Gear* gear, int& currentStrip) {
+    gear->strips[currentStrip].first = (GLint)(vertex - gear->vertices);
+}
+
+void GearsScene::endStrip(Gear* gear, int& currentStrip) {
+    int _tmp = (GLint)(vertex - gear->vertices);
+    gear->strips[currentStrip].count = _tmp - gear->strips[currentStrip].first;
+    currentStrip++;
+}
+
+void GearsScene::quadWithNormal(int p1, int p2, GLfloat gearWidth) {
+    setNormal((points[(p1)].y - points[(p2)].y),
+              -(points[(p1)].x - points[(p2)].x), 0);
+    gearVert((p1), -1, gearWidth);
+    gearVert((p1), 1, gearWidth);
+    gearVert((p2), -1, gearWidth);
+    gearVert((p2), 1, gearWidth);
 }
 
 Gear* GearsScene::createGear(GLfloat innerRad,
                              GLfloat outerRad,
-                             GLfloat width,
+                             GLfloat gearWidth,
                              GLfloat teeth,
                              GLfloat toothDepth) {
     GLfloat rad0;
     GLfloat rad1;
     GLfloat rad2;
     GLfloat diameter;
-
-    GearVertex* vertex;
     Gear* gear;
-
-    double sinArr[5];
-    double cosArr[5];
-    GLfloat normal[3];
-
     int currentStrip = 0;
 
     gear = (Gear*)malloc(sizeof *gear);
@@ -137,110 +160,67 @@ Gear* GearsScene::createGear(GLfloat innerRad,
 
     // Calculate needed sin/cos for various angles
     for (int i = 0; i < (int)teeth; ++i) {
-        sincos((float)i * 2.0F * M_PI / teeth, &sinArr[0], &cosArr[0]);
-        sincos((float)i * 2.0F * M_PI / teeth + diameter, &sinArr[1],
-               &cosArr[1]);
-        sincos((float)i * 2.0F * M_PI / teeth + diameter * 2, &sinArr[2],
-               &cosArr[2]);
-        sincos((float)i * 2.0F * M_PI / teeth + diameter * 3, &sinArr[3],
-               &cosArr[3]);
-        sincos((float)i * 2.0F * M_PI / teeth + diameter * 4, &sinArr[4],
-               &cosArr[4]);
-
-        // Macros that do shit idk
-#define GEAR_POINT(r, da) \
-    { (float)((r)*cosArr[(da)]), (float)((r)*sinArr[(da)]) }
-#define SET_NORMAL(x, y, z) \
-    do {                    \
-        normal[0] = (x);    \
-        normal[1] = (y);    \
-        normal[2] = (z);    \
-    } while (0)
-
-#define GEAR_VERT(v, point, sign)                             \
-    fillGearVertex((v), points[(point)].x, points[(point)].y, \
-                   (sign)*width * 0.5, normal)
-
-#define START_STRIP                                                 \
-    do {                                                            \
-        gear->strips[currentStrip].first = vertex - gear->vertices; \
-    } while (0);
-
-#define END_STRIP                                    \
-    do {                                             \
-        int _tmp = (vertex - gear->vertices);        \
-        gear->strips[currentStrip].count =           \
-            _tmp - gear->strips[currentStrip].first; \
-        currentStrip++;                              \
-    } while (0)
-
-#define QUAD_WITH_NORMAL(p1, p2)                           \
-    do {                                                   \
-        SET_NORMAL((points[(p1)].y - points[(p2)].y),      \
-                   -(points[(p1)].x - points[(p2)].x), 0); \
-        vertex = GEAR_VERT(vertex, (p1), -1);              \
-        vertex = GEAR_VERT(vertex, (p1), 1);               \
-        vertex = GEAR_VERT(vertex, (p2), -1);              \
-        vertex = GEAR_VERT(vertex, (p2), 1);               \
-    } while (0)
-
-        using Point = struct {
-            GLfloat x;
-            GLfloat y;
-        };
+        double temp = (double)i * 2.0F * M_PI / teeth;
+        sincos(temp, &sinArr[0], &cosArr[0]);
+        sincos(temp + diameter, &sinArr[1], &cosArr[1]);
+        sincos(temp + diameter * 2, &sinArr[2], &cosArr[2]);
+        sincos(temp + diameter * 3, &sinArr[3], &cosArr[3]);
+        sincos(temp + diameter * 4, &sinArr[4], &cosArr[4]);
 
         // Create 7 points (x,y coords) that make up a tooth
-        Point points[7] = {
-            GEAR_POINT(rad2, 1), GEAR_POINT(rad2, 2), GEAR_POINT(rad1, 0),
-            GEAR_POINT(rad1, 3), GEAR_POINT(rad0, 0), GEAR_POINT(rad1, 4),
-            GEAR_POINT(rad0, 4),
-        };
+        points[0] = GearPoint(rad2, 1);
+        points[1] = GearPoint(rad2, 2);
+        points[2] = GearPoint(rad1, 0);
+        points[3] = GearPoint(rad1, 3);
+        points[4] = GearPoint(rad0, 0);
+        points[5] = GearPoint(rad1, 4);
+        points[6] = GearPoint(rad0, 4);
 
         // Front face
-        START_STRIP;
-        SET_NORMAL(0, 0, 1.0);
-        vertex = GEAR_VERT(vertex, 0, +1);
-        vertex = GEAR_VERT(vertex, 1, +1);
-        vertex = GEAR_VERT(vertex, 2, +1);
-        vertex = GEAR_VERT(vertex, 3, +1);
-        vertex = GEAR_VERT(vertex, 4, +1);
-        vertex = GEAR_VERT(vertex, 5, +1);
-        vertex = GEAR_VERT(vertex, 6, +1);
-        END_STRIP;
+        startStrip(gear, currentStrip);
+        setNormal(0, 0, 1.0);
+        gearVert(0, +1, gearWidth);
+        gearVert(1, +1, gearWidth);
+        gearVert(2, +1, gearWidth);
+        gearVert(3, +1, gearWidth);
+        gearVert(4, +1, gearWidth);
+        gearVert(5, +1, gearWidth);
+        gearVert(6, +1, gearWidth);
+        endStrip(gear, currentStrip);
 
         // Inner face
-        START_STRIP;
-        QUAD_WITH_NORMAL(4, 6);
-        END_STRIP;
+        startStrip(gear, currentStrip);
+        quadWithNormal(4, 6, gearWidth);
+        endStrip(gear, currentStrip);
 
         // Back face
-        START_STRIP;
-        SET_NORMAL(0, 0, -1.0);
-        vertex = GEAR_VERT(vertex, 6, -1);
-        vertex = GEAR_VERT(vertex, 5, -1);
-        vertex = GEAR_VERT(vertex, 4, -1);
-        vertex = GEAR_VERT(vertex, 3, -1);
-        vertex = GEAR_VERT(vertex, 2, -1);
-        vertex = GEAR_VERT(vertex, 1, -1);
-        vertex = GEAR_VERT(vertex, 0, -1);
-        END_STRIP;
+        startStrip(gear, currentStrip);
+        setNormal(0, 0, -1.0);
+        gearVert(6, -1, gearWidth);
+        gearVert(5, -1, gearWidth);
+        gearVert(4, -1, gearWidth);
+        gearVert(3, -1, gearWidth);
+        gearVert(2, -1, gearWidth);
+        gearVert(1, -1, gearWidth);
+        gearVert(0, -1, gearWidth);
+        endStrip(gear, currentStrip);
 
         // Outer face
-        START_STRIP;
-        QUAD_WITH_NORMAL(0, 2);
-        END_STRIP;
+        startStrip(gear, currentStrip);
+        quadWithNormal(0, 2, gearWidth);
+        endStrip(gear, currentStrip);
 
-        START_STRIP;
-        QUAD_WITH_NORMAL(1, 0);
-        END_STRIP;
+        startStrip(gear, currentStrip);
+        quadWithNormal(1, 0, gearWidth);
+        endStrip(gear, currentStrip);
 
-        START_STRIP;
-        QUAD_WITH_NORMAL(3, 1);
-        END_STRIP;
+        startStrip(gear, currentStrip);
+        quadWithNormal(3, 1, gearWidth);
+        endStrip(gear, currentStrip);
 
-        START_STRIP;
-        QUAD_WITH_NORMAL(5, 3);
-        END_STRIP;
+        startStrip(gear, currentStrip);
+        quadWithNormal(5, 3, gearWidth);
+        endStrip(gear, currentStrip);
     }
 
     gear->nVertices = (int)(vertex - gear->vertices);
@@ -268,10 +248,9 @@ void GearsScene::drawGear(Gear* gear,
                         1);
 
     /* Create and set the ModelViewProjectionMatrix */
-    memcpy(modelViewProjection, this->projectionMatrix,
-           sizeof(modelViewProjection));
+    memcpy(modelViewProjection, projectionMatrix, sizeof(modelViewProjection));
     Graphics::mulMat4x4(modelViewProjection, modelView);
-    Graphics::setUniformMatrixValue((GLint)this->modelViewProjectionMatrixLoc,
+    Graphics::setUniformMatrixValue((GLint)modelViewProjectionMatrixLoc,
                                     modelViewProjection);
 
     /*
@@ -281,45 +260,25 @@ void GearsScene::drawGear(Gear* gear,
     memcpy(normalMatrix, modelView, sizeof(normalMatrix));
     Graphics::invMat4x4(normalMatrix);
     Graphics::tposeMat4x4(normalMatrix);
-    Graphics::setUniformMatrixValue((GLint)this->normalMatrixLoc, normalMatrix);
+    Graphics::setUniformMatrixValue((GLint)normalMatrixLoc, normalMatrix);
 
     /* Set the gear color */
-    Graphics::setUniformValue((GLint)this->materialColorLoc, color);
+    Graphics::setUniformValue((GLint)materialColorLoc, color);
 
-    /* Set the vertex buffer object to use */
-    glBindBuffer(GL_ARRAY_BUFFER, gear->vertexBufObj);
-
-    /* Set up the position of the attributes in the vertex buffer object */
-    int bindingIdx = 0;
-
-    glEnableVertexAttribArray(0);
-    glVertexAttribFormat(0, 3, GL_FLOAT, GL_FALSE, 0);
-    glVertexAttribBinding(0, bindingIdx);
-
-    glEnableVertexAttribArray(1);
-    glVertexAttribFormat(1, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3);
-    glVertexAttribBinding(1, bindingIdx);
-
-    glBindVertexBuffer(bindingIdx, gear->vertexBufObj, 0, sizeof(GLfloat) * 6);
-
-    /* Draw the triangle strips that comprise the gear */
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, gear->nVertices);
-
-    /* Disable the attributes */
-    glDisableVertexAttribArray(1);
-    glDisableVertexAttribArray(0);
+    // Draw the triangle strips that comprise the gear
+    Graphics::drawArrays(gear->vertexBufObj, GL_TRIANGLE_STRIP, gear->nVertices,
+                         0, 2, 0, sizeof(GLfloat) * 3);
 }
 
 void GearsScene::reshape() {
-    if (this->width != this->pGame->pWindow->getWidth() ||
-        this->height != this->pGame->pWindow->getHeight()) {
-        this->width = this->pGame->pWindow->getWidth();
-        this->height = this->pGame->pWindow->getHeight();
+    if (width != pGame->pWindow->getWidth() ||
+        height != pGame->pWindow->getHeight()) {
+        width = pGame->pWindow->getWidth();
+        height = pGame->pWindow->getHeight();
 
-        Graphics::calcPersProjTform(this->projectionMatrix, 60.0,
-                                    (float)this->width / (float)this->height,
-                                    1.0, 1024.0);
-        glViewport(0, 0, (GLint)this->width, (GLint)this->height);
+        Graphics::calcPersProjTform(projectionMatrix, 60.0,
+                                    (float)width / (float)height, 1.0, 1024.0);
+        glViewport(0, 0, (GLint)width, (GLint)height);
     }
 }
 
@@ -337,12 +296,12 @@ void GearsScene::idle() {
     tRot0 = t;
 
     /* advance rotation for next frame */
-    this->currentAngle += 70.0F * (GLfloat)dt; /* 70 degrees per second */
-    if (this->currentAngle > 3600.0) {
-        this->currentAngle -= 3600.0;
+    currentAngle += 70.0F * (GLfloat)dt; /* 70 degrees per second */
+    if (currentAngle > 3600.0) {
+        currentAngle -= 3600.0;
     }
 
-    this->pGame->pRenderer->draw();
+    pGame->pRenderer->draw();
     frames++;
 
     if (tRate0 < 0.0) {

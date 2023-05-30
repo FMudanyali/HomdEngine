@@ -96,6 +96,39 @@ void Graphics::storeVertexBufObj(GLuint& dest, GLsizeiptr size, int* target) {
     glBufferData(GL_ARRAY_BUFFER, size, target, GL_STATIC_DRAW);
 }
 
+void Graphics::enable(int cap) {
+    glEnable(cap);
+}
+
+void Graphics::drawArrays(GLuint& vertexBufObj,
+                          int mode,
+                          int count,
+                          int attrBindingIdx,
+                          int attrCount,
+                          int attrOffset,
+                          GLsizei attrSize) {
+    /* Set the vertex buffer object to use */
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBufObj);
+
+    /* Set up the position of the attributes in the vertex buffer object */
+    for (int i = 0; i < attrCount; ++i) {
+        glEnableVertexAttribArray(i);
+        glVertexAttribFormat(i, 3, GL_FLOAT, GL_FALSE,
+                             attrOffset + i * attrSize);
+        glVertexAttribBinding(i, attrBindingIdx);
+    }
+
+    glBindVertexBuffer(attrBindingIdx, vertexBufObj, 0, attrCount * attrSize);
+
+    /* Draw the triangle strips that comprise the gear */
+    glDrawArrays(mode, 0, count);
+
+    /* Disable the attributes */
+    for (int i = attrCount - 1; i >= 0; --i) {
+        glDisableVertexAttribArray(i);
+    }
+}
+
 void Graphics::mulMat4x4(GLfloat* m, const GLfloat* n) {
     GLfloat tmp[16];
     const GLfloat* row;

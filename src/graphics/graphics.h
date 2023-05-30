@@ -36,6 +36,16 @@ class Graphics {
 
     static void storeVertexBufObj(GLuint&, GLsizeiptr, int*);
 
+    static void drawArrays(GLuint& vertexBufObj,
+                           int mode,
+                           int count,
+                           int attrBindingIdx,
+                           int attrCount,
+                           int attrOffset,
+                           GLsizei attrSize);
+
+    static void enable(int cap);
+
     /**
      * Multiplies two 4x4 matrices
      *

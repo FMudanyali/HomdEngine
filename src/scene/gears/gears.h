@@ -8,7 +8,7 @@
 #include <scene/scene.h>
 
 #define STRIPS_PER_TOOTH 7
-#define VERTICES_PER_TOOTH 35
+#define VERTICES_PER_TOOTH 34
 #define GEAR_VERTEX_STRIDE 6
 
 // Class describing the vertices in triangle strip
@@ -36,7 +36,16 @@ using Gear = struct {
     GLuint vertexBufObj;
 };
 
+using Point = struct {
+    GLfloat x;
+    GLfloat y;
+};
+
 class GearsScene : public Scene {
+    // Second set of screen resolution to keep track
+    // of window resize
+    int width;
+    int height;
     // The view rotation [x, y, z]
     GLfloat viewRotation[3] = {20.0, 30.0, 0.0};
     // The gears
@@ -51,11 +60,22 @@ class GearsScene : public Scene {
     // The projection matrix
     GLfloat projectionMatrix[16];
 
-    int width;
-    int height;
+    GearVertex* vertex;
+    double sinArr[5];
+    double cosArr[5];
+    GLfloat normal[3];
+    Point points[7];
+
+    Point GearPoint(GLfloat radius, int diameter);
+    void gearVert(int point, int sign, GLfloat gearWidth);
+    void setNormal(GLfloat x, GLfloat y, GLfloat z);
+    void quadWithNormal(int p1, int p2, GLfloat gearWidth);
+    void startStrip(Gear* gear, int& currentStrip);
+    void endStrip(Gear* gear, int& currentStrip);
 
     void idle();
     void reshape();
+
     // The direction of the directional light for the scene
     const GLfloat lightSourcePos[4] = {5.0, 5.0, 10.0, 1.0};
 
@@ -70,11 +90,7 @@ class GearsScene : public Scene {
      *
      * @return the operation error code
      */
-    static GearVertex* fillGearVertex(GearVertex* gearVertex,
-                                      GLfloat x,
-                                      GLfloat y,
-                                      GLfloat z,
-                                      const GLfloat n[3]);
+    void fillGearVertex(GLfloat x, GLfloat y, GLfloat z, const GLfloat n[3]);
 
     /**
      * Create a gear wheel.
@@ -87,11 +103,11 @@ class GearsScene : public Scene {
      *
      * @return the pointer to the constructed gear struct
      */
-    static Gear* createGear(GLfloat innerRad,
-                            GLfloat outerRad,
-                            GLfloat width,
-                            GLfloat teeth,
-                            GLfloat toothDepth);
+    Gear* createGear(GLfloat innerRad,
+                     GLfloat outerRad,
+                     GLfloat width,
+                     GLfloat teeth,
+                     GLfloat toothDepth);
 
     /**
      * Draws a gear
