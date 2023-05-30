@@ -15,6 +15,14 @@
 class Game;
 class Window;
 
+// Struct describing the vertices in triangle strip
+using VertexStrip = struct VertexStrip {
+    // First vertex in the strip
+    GLint first;
+    // Number of consecutive verices in the strip after the first
+    GLint count;
+};
+
 class Graphics {
     Game* pGame;
     SDL_GLContext context = nullptr;
@@ -38,7 +46,8 @@ class Graphics {
 
     static void drawArrays(GLuint& vertexBufObj,
                            int mode,
-                           int count,
+                           int stripCount,
+                           VertexStrip* strips,
                            int attrBindingIdx,
                            int attrCount,
                            int attrOffset,

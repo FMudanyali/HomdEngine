@@ -5,6 +5,8 @@
 
 #include <GLES3/gl3.h>
 #include <GL/glew.h>
+#include <SDL2/SDL_keycode.h>
+#include <SDL2/SDL_scancode.h>
 #include <game/game.h>
 #include <graphics/graphics.h>
 #include <scene/gears/gears.h>
@@ -266,8 +268,8 @@ void GearsScene::drawGear(Gear* gear,
     Graphics::setUniformValue((GLint)materialColorLoc, color);
 
     // Draw the triangle strips that comprise the gear
-    Graphics::drawArrays(gear->vertexBufObj, GL_TRIANGLE_STRIP, gear->nVertices,
-                         0, 2, 0, sizeof(GLfloat) * 3);
+    Graphics::drawArrays(gear->vertexBufObj, GL_TRIANGLE_STRIP, gear->nStrips,
+                         gear->strips, 0, 2, 0, sizeof(GLfloat) * 3);
 }
 
 void GearsScene::reshape() {
@@ -317,6 +319,22 @@ void GearsScene::idle() {
     }
 }
 
+void GearsScene::keypress() {
+    static const Uint8* keys = pGame->pInput->keys;
+    if (keys[SDL_SCANCODE_LEFT] || keys[SDL_SCANCODE_A]) {
+        viewRotation[1] += 5.0F;
+    }
+    if (keys[SDL_SCANCODE_RIGHT] || keys[SDL_SCANCODE_D]) {
+        viewRotation[1] -= 5.0F;
+    }
+    if (keys[SDL_SCANCODE_UP] || keys[SDL_SCANCODE_W]) {
+        viewRotation[0] += 5.0F;
+    }
+    if (keys[SDL_SCANCODE_DOWN] || keys[SDL_SCANCODE_S]) {
+        viewRotation[0] -= 5.0F;
+    }
+}
+
 void GearsScene::draw() {
     const static GLfloat red[4] = {0.8, 0.1, 0.0, 1.0};
     const static GLfloat green[4] = {0.0, 0.8, 0.2, 1.0};
@@ -344,5 +362,6 @@ void GearsScene::draw() {
              blue);
 
     reshape();
+    keypress();
     idle();
 }

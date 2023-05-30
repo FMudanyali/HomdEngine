@@ -102,7 +102,8 @@ void Graphics::enable(int cap) {
 
 void Graphics::drawArrays(GLuint& vertexBufObj,
                           int mode,
-                          int count,
+                          int stripCount,
+                          VertexStrip* strips,
                           int attrBindingIdx,
                           int attrCount,
                           int attrOffset,
@@ -121,7 +122,9 @@ void Graphics::drawArrays(GLuint& vertexBufObj,
     glBindVertexBuffer(attrBindingIdx, vertexBufObj, 0, attrCount * attrSize);
 
     /* Draw the triangle strips that comprise the gear */
-    glDrawArrays(mode, 0, count);
+    for (int n = 0; n < stripCount; ++n) {
+        glDrawArrays(mode, strips[n].first, strips[n].count);
+    }
 
     /* Disable the attributes */
     for (int i = attrCount - 1; i >= 0; --i) {

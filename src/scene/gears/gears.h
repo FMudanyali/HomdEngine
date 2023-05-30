@@ -11,13 +11,7 @@
 #define VERTICES_PER_TOOTH 34
 #define GEAR_VERTEX_STRIDE 6
 
-// Class describing the vertices in triangle strip
-using VertexStrip = struct {
-    // First vertex in the strip
-    GLint first;
-    // Number of consecutive verices in the strip after the first
-    GLint count;
-};
+struct VertexStrip;
 
 // Each vertex consists of GEAR_VERTEX_STRIDE GLfloat attributes
 using GearVertex = GLfloat[GEAR_VERTEX_STRIDE];
@@ -75,6 +69,7 @@ class GearsScene : public Scene {
 
     void idle();
     void reshape();
+    void keypress();
 
     // The direction of the directional light for the scene
     const GLfloat lightSourcePos[4] = {5.0, 5.0, 10.0, 1.0};

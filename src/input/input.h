@@ -18,7 +18,9 @@ class Input {
    public:
     Input(Game*);
     ~Input() = default;
+    const Uint8* keys;
     bool pollEvent();
+    void pollKeys();
 };
 
 #endif

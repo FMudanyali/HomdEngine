@@ -18,6 +18,7 @@ void Game::loop() {
     while (!this->done && !this->scenes.empty()) {
         this->pWindow->updateDimensions();
         this->done = this->pInput->pollEvent();
+        this->pInput->pollKeys();
 
         if (this->scenes.top()->destroy) {
             delete this->scenes.top();

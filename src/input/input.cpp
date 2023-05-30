@@ -3,6 +3,7 @@
  * All rights reserved
  */
 
+#include <SDL2/SDL_keyboard.h>
 #include <game/game.h>
 #include <input/input.h>
 
@@ -21,4 +22,8 @@ bool Input::pollEvent() {
            event.window.event == SDL_WINDOWEVENT_CLOSE &&
            event.window.windowID ==
                SDL_GetWindowID(this->game->pWindow->window);
+}
+
+void Input::pollKeys() {
+    this->keys = SDL_GetKeyboardState(nullptr);
 }
