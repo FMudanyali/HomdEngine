@@ -44,7 +44,7 @@ class Graphics {
      * @param m first matrix
      * @param n second matrix
      */
-    static void multiply4x4Matrices(GLfloat*, const GLfloat*);
+    static void mulMat4x4(GLfloat*, const GLfloat*);
 
     /**
      * Rotates a 4x4 matrix
@@ -55,7 +55,7 @@ class Graphics {
      * @param y the y component of the direction to rotate to
      * @param z the z component of the direction to rotate to
      */
-    static void rotate4x4Matrix(GLfloat*, GLfloat, GLfloat, GLfloat, GLfloat);
+    static void rotMat4x4(GLfloat*, GLfloat, GLfloat, GLfloat, GLfloat);
 
     /**
      * Translates a 4x4 matrix
@@ -65,28 +65,28 @@ class Graphics {
      * @param y the y component of the direction to translate to
      * @param z the z component of the direction to translate to
      */
-    static void translate4x4Matrix(GLfloat*, GLfloat, GLfloat, GLfloat);
+    static void tlateMat4x4(GLfloat*, GLfloat, GLfloat, GLfloat);
 
     /**
      * Creates a 4x4 identity matrix
      *
      * @param m the matrix to convert to an identity matrix
      */
-    static void create4x4IdentityMatrix(GLfloat*);
+    static void identMat4x4(GLfloat*);
 
     /**
      * Transposes a 4x4 matrix.
      *
      * @param m the matrix to transpose
      */
-    static void transpose4x4Matrix(GLfloat*);
+    static void tposeMat4x4(GLfloat*);
 
     /**
      * Inverts a 4x4 matrix.
      *
      * @param m the matrix to invert
      */
-    static void invert4x4Matrix(GLfloat*);
+    static void invMat4x4(GLfloat*);
 
     /**
      * Calculate a perspective projection transformation.
@@ -97,11 +97,7 @@ class Graphics {
      * @param zNear the near clipping plane
      * @param zFar the far clipping plane
      */
-    static void calcPerspectiveProjectTransformation(GLfloat*,
-                                                     GLfloat,
-                                                     GLfloat,
-                                                     GLfloat,
-                                                     GLfloat);
+    static void calcPersProjTform(GLfloat*, GLfloat, GLfloat, GLfloat, GLfloat);
 };
 
 #endif

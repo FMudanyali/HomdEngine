@@ -263,14 +263,14 @@ void GearsScene::drawGear(Gear* gear,
 
     // Translate and rotate the gear
     memcpy(modelView, transform, sizeof(modelView));
-    Graphics::translate4x4Matrix(modelView, x, y, 0);
-    Graphics::rotate4x4Matrix(modelView, 2.0F * (float)M_PI * angle / 360.0F, 0,
-                              0, 1);
+    Graphics::tlateMat4x4(modelView, x, y, 0);
+    Graphics::rotMat4x4(modelView, 2.0F * (float)M_PI * angle / 360.0F, 0, 0,
+                        1);
 
     /* Create and set the ModelViewProjectionMatrix */
     memcpy(modelViewProjection, this->projectionMatrix,
            sizeof(modelViewProjection));
-    Graphics::multiply4x4Matrices(modelViewProjection, modelView);
+    Graphics::mulMat4x4(modelViewProjection, modelView);
     Graphics::setUniformMatrixValue((GLint)this->modelViewProjectionMatrixLoc,
                                     modelViewProjection);
 
@@ -279,8 +279,8 @@ void GearsScene::drawGear(Gear* gear,
      * ModelView matrix.
      */
     memcpy(normalMatrix, modelView, sizeof(normalMatrix));
-    Graphics::invert4x4Matrix(normalMatrix);
-    Graphics::transpose4x4Matrix(normalMatrix);
+    Graphics::invMat4x4(normalMatrix);
+    Graphics::tposeMat4x4(normalMatrix);
     Graphics::setUniformMatrixValue((GLint)this->normalMatrixLoc, normalMatrix);
 
     /* Set the gear color */
@@ -290,14 +290,17 @@ void GearsScene::drawGear(Gear* gear,
     glBindBuffer(GL_ARRAY_BUFFER, gear->vertexBufObj);
 
     /* Set up the position of the attributes in the vertex buffer object */
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat),
-                          nullptr);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat),
-                          (GLfloat*)(sizeof(GLfloat) * 3));
+    int bindingIdx = 0;
 
-    /* Enable the attributes */
     glEnableVertexAttribArray(0);
+    glVertexAttribFormat(0, 3, GL_FLOAT, GL_FALSE, 0);
+    glVertexAttribBinding(0, bindingIdx);
+
     glEnableVertexAttribArray(1);
+    glVertexAttribFormat(1, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3);
+    glVertexAttribBinding(1, bindingIdx);
+
+    glBindVertexBuffer(bindingIdx, gear->vertexBufObj, 0, sizeof(GLfloat) * 6);
 
     /* Draw the triangle strips that comprise the gear */
     glDrawArrays(GL_TRIANGLE_STRIP, 0, gear->nVertices);
@@ -313,9 +316,9 @@ void GearsScene::reshape() {
         this->width = this->pGame->pWindow->getWidth();
         this->height = this->pGame->pWindow->getHeight();
 
-        Graphics::calcPerspectiveProjectTransformation(
-            this->projectionMatrix, 60.0,
-            (float)this->width / (float)this->height, 1.0, 1024.0);
+        Graphics::calcPersProjTform(this->projectionMatrix, 60.0,
+                                    (float)this->width / (float)this->height,
+                                    1.0, 1024.0);
         glViewport(0, 0, (GLint)this->width, (GLint)this->height);
     }
 }
@@ -334,7 +337,7 @@ void GearsScene::idle() {
     tRot0 = t;
 
     /* advance rotation for next frame */
-    this->currentAngle += 70.0 * dt; /* 70 degrees per second */
+    this->currentAngle += 70.0F * (GLfloat)dt; /* 70 degrees per second */
     if (this->currentAngle > 3600.0) {
         this->currentAngle -= 3600.0;
     }
@@ -346,8 +349,8 @@ void GearsScene::idle() {
         tRate0 = t;
     }
     if (t - tRate0 >= 5.0) {
-        GLfloat seconds = t - tRate0;
-        GLfloat fps = frames / seconds;
+        auto seconds = (GLfloat)(t - tRate0);
+        GLfloat fps = (GLfloat)frames / seconds;
         printf("%d frames in %3.1f seconds = %6.3f FPS\n", frames, seconds,
                fps);
         tRate0 = t;
@@ -360,19 +363,19 @@ void GearsScene::draw() {
     const static GLfloat green[4] = {0.0, 0.8, 0.2, 1.0};
     const static GLfloat blue[4] = {0.2, 0.2, 1.0, 1.0};
     GLfloat transform[16];
-    Graphics::create4x4IdentityMatrix(transform);
+    Graphics::identMat4x4(transform);
 
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     /* Translate and rotate the view */
-    Graphics::translate4x4Matrix(transform, 0, 0, -20);
-    Graphics::rotate4x4Matrix(
-        transform, 2.0F * (float)M_PI * viewRotation[0] / 360.0F, 1, 0, 0);
-    Graphics::rotate4x4Matrix(
-        transform, 2.0F * (float)M_PI * viewRotation[1] / 360.0F, 0, 1, 0);
-    Graphics::rotate4x4Matrix(
-        transform, 2.0F * (float)M_PI * viewRotation[2] / 360.0F, 0, 0, 1);
+    Graphics::tlateMat4x4(transform, 0, 0, -20);
+    Graphics::rotMat4x4(transform,
+                        2.0F * (float)M_PI * viewRotation[0] / 360.0F, 1, 0, 0);
+    Graphics::rotMat4x4(transform,
+                        2.0F * (float)M_PI * viewRotation[1] / 360.0F, 0, 1, 0);
+    Graphics::rotMat4x4(transform,
+                        2.0F * (float)M_PI * viewRotation[2] / 360.0F, 0, 0, 1);
 
     /* Draw the gears */
     drawGear(gears[0], transform, -3.0, -2.0, currentAngle, red);

@@ -10,6 +10,7 @@
 #include <game/game.h>
 #include <graphics/graphics.h>
 #include <window/window.h>
+#include <cstddef>
 #include <iostream>
 #include <string>
 
@@ -95,7 +96,7 @@ void Graphics::storeVertexBufObj(GLuint& dest, GLsizeiptr size, int* target) {
     glBufferData(GL_ARRAY_BUFFER, size, target, GL_STATIC_DRAW);
 }
 
-void Graphics::multiply4x4Matrices(GLfloat* m, const GLfloat* n) {
+void Graphics::mulMat4x4(GLfloat* m, const GLfloat* n) {
     GLfloat tmp[16];
     const GLfloat* row;
     const GLfloat* column;
@@ -104,20 +105,20 @@ void Graphics::multiply4x4Matrices(GLfloat* m, const GLfloat* n) {
     for (int i = 0; i < 16; i++) {
         tmp[i] = 0;
         d = div(i, 4);
-        row = n + d.quot * 4;
+        row = n + (ptrdiff_t)(d.quot * 4);
         column = m + d.rem;
         for (int j = 0; j < 4; j++) {
-            tmp[i] += row[j] * column[j * 4];
+            tmp[i] += row[j] * column[(ptrdiff_t)(j * 4)];
         }
     }
     memcpy(m, &tmp, sizeof tmp);
 }
 
-void Graphics::rotate4x4Matrix(GLfloat* m,
-                               GLfloat angle,
-                               GLfloat x,
-                               GLfloat y,
-                               GLfloat z) {
+void Graphics::rotMat4x4(GLfloat* m,
+                         GLfloat angle,
+                         GLfloat x,
+                         GLfloat y,
+                         GLfloat z) {
     double sin;
     double cos;
 
@@ -139,16 +140,16 @@ void Graphics::rotate4x4Matrix(GLfloat* m,
                      0,
                      1};
 
-    multiply4x4Matrices(m, r);
+    mulMat4x4(m, r);
 }
 
-void Graphics::translate4x4Matrix(GLfloat* m, GLfloat x, GLfloat y, GLfloat z) {
+void Graphics::tlateMat4x4(GLfloat* m, GLfloat x, GLfloat y, GLfloat z) {
     GLfloat t[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, x, y, z, 1};
 
-    multiply4x4Matrices(m, t);
+    mulMat4x4(m, t);
 }
 
-void Graphics::create4x4IdentityMatrix(GLfloat* m) {
+void Graphics::identMat4x4(GLfloat* m) {
     GLfloat t[16] = {
         1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
         0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
@@ -157,16 +158,16 @@ void Graphics::create4x4IdentityMatrix(GLfloat* m) {
     memcpy(m, t, sizeof(t));
 }
 
-void Graphics::transpose4x4Matrix(GLfloat* m) {
+void Graphics::tposeMat4x4(GLfloat* m) {
     GLfloat t[16] = {m[0], m[4], m[8],  m[12], m[1], m[5], m[9],  m[13],
                      m[2], m[6], m[10], m[14], m[3], m[7], m[11], m[15]};
 
     memcpy(m, t, sizeof(t));
 }
 
-void Graphics::invert4x4Matrix(GLfloat* m) {
+void Graphics::invMat4x4(GLfloat* m) {
     GLfloat t[16];
-    create4x4IdentityMatrix(t);
+    identMat4x4(t);
 
     // Extract and invert the translation part 't'. The inverse of a
     // translation matrix can be calculated by negating the translation
@@ -178,19 +179,19 @@ void Graphics::invert4x4Matrix(GLfloat* m) {
     // Invert the rotation part 'r'. The inverse of a rotation matrix is
     // equal to its transpose.
     m[12] = m[13] = m[14] = 0;
-    transpose4x4Matrix(m);
+    tposeMat4x4(m);
 
     // inv(m) = inv(r) * inv(t)
-    multiply4x4Matrices(m, t);
+    mulMat4x4(m, t);
 }
 
-void Graphics::calcPerspectiveProjectTransformation(GLfloat* m,
-                                                    GLfloat yFOV,
-                                                    GLfloat aspect,
-                                                    GLfloat zNear,
-                                                    GLfloat zFar) {
+void Graphics::calcPersProjTform(GLfloat* m,
+                                 GLfloat yFOV,
+                                 GLfloat aspect,
+                                 GLfloat zNear,
+                                 GLfloat zFar) {
     GLfloat tmp[16];
-    create4x4IdentityMatrix(tmp);
+    identMat4x4(tmp);
 
     double sine;
     double cosine;

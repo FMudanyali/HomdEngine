@@ -1,19 +1,23 @@
 Diagnostics:
   ClangTidy:
-    Add: [
-      modernize*,
-      bugprone*,
-      performance*,
-      readability*
-    ]
-    Remove: [
-      modernize-use-trailing-return-type,
-      modernize-avoid-c-arrays,
-      readability-magic-numbers,
-      readability-implicit-bool-conversion,
-      readability-identifier-length,
-      bugprone-easily-swappable-parameters
-    ]
+    Add: [modernize*, bugprone*, performance*, readability*]
+    Remove:
+      [
+        modernize-use-trailing-return-type,
+        modernize-avoid-c-arrays,
+        readability-magic-numbers,
+        readability-implicit-bool-conversion,
+        readability-identifier-length,
+        bugprone-easily-swappable-parameters,
+      ]
+
+InlayHints:
+  Enabled: Yes
+  ParameterNames: Yes
+  DeducedTypes: Yes
+
+Hover:
+  ShowAKA: No
 
 Completion:
   AllScopes: Yes

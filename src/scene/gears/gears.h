@@ -96,7 +96,6 @@ class GearsScene : public Scene {
     /**
      * Draws a gear
      *
-     * @param gear the gear to draw
      * @param transform the current transformation matrix
      * @param x the x pos to draw the gear at
      * @param y the y pos to draw the gear at

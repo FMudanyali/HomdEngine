@@ -1,6 +1,7 @@
 BasedOnStyle: Chromium
 IndentWidth: 4
 SortIncludes: false
+AlignTrailingComments: true
 
 Language: Cpp
 # Force pointers to the type for C++.

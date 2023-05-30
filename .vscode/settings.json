@@ -1,5 +1,6 @@
 {
   "C_Cpp.intelliSenseEngine": "disabled",
+  "editor.inlayHints.enabled": "on",
   "cmake.statusbar.advanced": {
     "debug": {
       "visibility": "hidden"
