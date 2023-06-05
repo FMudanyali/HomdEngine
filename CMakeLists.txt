@@ -30,6 +30,9 @@ IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
     SET(LINK_FLAGS "${debug_linker}")
     SET(optimize_flags "-Og -g3 -ffunction-sections -fdata-sections")
     ADD_DEFINITIONS(-DDEBUG)
+    IF(WIN32)
+        SET(win_console "-mconsole")
+    ENDIF()
 ELSE()
     SET(optimize_flags "-O3 -ffast-math")
 ENDIF()
@@ -61,7 +64,7 @@ SET(warn_flags "\
 
 # Put all the flags we have gathered
 SET(CMAKE_CXX_FLAGS 
-    "${arch_flags} ${optimize_flags} ${warn_flags} ${win_flags}"
+    "${arch_flags} ${optimize_flags} ${warn_flags} ${win_flags} ${win_console}"
 )
 
 # The main project files
@@ -110,7 +113,7 @@ ADD_EXECUTABLE(HomdEngine
 )
 
 IF(WIN32)
-    SET(win32_link -mwindows, -mconsole)
+    SET(win32_link -mwindows)
 ENDIF()
 
 TARGET_LINK_LIBRARIES(HomdEngine
